@@ -31,13 +31,18 @@
 #include "librpbase/img/IconAnimHelper.hpp"
 using namespace LibRpBase;
 
+// libi18n
+#include "libi18n/i18n.h"
+
 // C includes. (C++ namespace)
 #include <cassert>
 
 // C++ includes.
 #include <array>
+#include <string>
 #include <unordered_map>
 #include <vector>
+using std::string;
 using std::unordered_map;
 using std::vector;
 
@@ -254,21 +259,21 @@ void RomDataViewPrivate::initHeaderRow(void)
 
 	// System name.
 	// TODO: System logo and/or game title?
-	const rp_char *systemName = romData->systemName(
+	const char *systemName = romData->systemName(
 		RomData::SYSNAME_TYPE_LONG | RomData::SYSNAME_REGION_ROM_LOCAL);
 
 	// File type.
-	const rp_char *const fileType = romData->fileType_string();
+	const char *const fileType = romData->fileType_string();
 
 	QString sysInfo;
 	if (systemName) {
-		sysInfo = RP2Q(systemName);
+		sysInfo = U82Q(systemName);
 	}
 	if (fileType) {
 		if (!sysInfo.isEmpty()) {
 			sysInfo += QChar(L'\n');
 		}
-		sysInfo += RP2Q(fileType);
+		sysInfo += U82Q(fileType);
 	}
 
 	if (!sysInfo.isEmpty()) {
@@ -411,7 +416,7 @@ void RomDataViewPrivate::initString(QLabel *lblDesc, const RomFields::Field *fie
 		lblString->setFocusPolicy(Qt::StrongFocus);
 		if (field->data.str) {
 			// Replace newlines with "<br/>".
-			QString text = RP2Q(*(field->data.str)).replace(QChar(L'\n'), QLatin1String("<br/>"));
+			QString text = U82Q(*(field->data.str)).replace(QChar(L'\n'), QLatin1String("<br/>"));
 			lblString->setText(text);
 		}
 	} else {
@@ -422,7 +427,7 @@ void RomDataViewPrivate::initString(QLabel *lblDesc, const RomFields::Field *fie
 		lblString->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 		lblString->setTextFormat(Qt::PlainText);
 		if (field->data.str) {
-			lblString->setText(RP2Q(*(field->data.str)));
+			lblString->setText(U82Q(*(field->data.str)));
 		}
 	}
 
@@ -495,13 +500,13 @@ void RomDataViewPrivate::initBitfield(QLabel *lblDesc, const RomFields::Field *f
 	QGridLayout *gridLayout = new QGridLayout();
 	int row = 0, col = 0;
 	for (int bit = 0; bit < count; bit++) {
-		const rp_string &name = bitfieldDesc.names->at(bit);
+		const string &name = bitfieldDesc.names->at(bit);
 		if (name.empty())
 			continue;
 
 		// TODO: Disable KDE's automatic mnemonic.
 		QCheckBox *checkBox = new QCheckBox(q);
-		checkBox->setText(RP2Q(name));
+		checkBox->setText(U82Q(name));
 		bool value = !!(field->data.bitfield & (1 << bit));
 		checkBox->setChecked(value);
 
@@ -562,9 +567,9 @@ void RomDataViewPrivate::initListData(QLabel *lblDesc, const RomFields::Field *f
 		QStringList columnNames;
 		columnNames.reserve(col_count);
 		for (int i = 0; i < col_count; i++) {
-			const rp_string &name = listDataDesc.names->at(i);
+			const string &name = listDataDesc.names->at(i);
 			if (!name.empty()) {
-				columnNames.append(RP2Q(name));
+				columnNames.append(U82Q(name));
 			} else {
 				// Don't show this column.
 				columnNames.append(QString());
@@ -583,7 +588,13 @@ void RomDataViewPrivate::initListData(QLabel *lblDesc, const RomFields::Field *f
 		const int row_count = (int)list_data->size();
 		uint32_t checkboxes = field->data.list_checkboxes;
 		for (int i = 0; i < row_count; i++) {
-			const vector<rp_string> &data_row = list_data->at(i);
+			const vector<string> &data_row = list_data->at(i);
+			if (hasCheckboxes && data_row.empty()) {
+				// Skip this row.
+				checkboxes >>= 1;
+				continue;
+			}
+
 			QTreeWidgetItem *treeWidgetItem = new QTreeWidgetItem(treeWidget);
 			if (hasCheckboxes) {
 				// The checkbox will only show up if setCheckState()
@@ -596,7 +607,7 @@ void RomDataViewPrivate::initListData(QLabel *lblDesc, const RomFields::Field *f
 
 			int col = 0;
 			for (auto iter = data_row.cbegin(); iter != data_row.cend(); ++iter, ++col) {
-				treeWidgetItem->setData(col, Qt::DisplayRole, RP2Q(*iter));
+				treeWidgetItem->setData(col, Qt::DisplayRole, U82Q(*iter));
 			}
 		}
 	}
@@ -674,8 +685,8 @@ void RomDataViewPrivate::initDateTime(QLabel *lblDesc, const RomFields::Field *f
 	lblDateTime->setTextInteractionFlags(Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse);
 
 	if (field->data.date_time == -1) {
-		// Invalid date/time.
-		lblDateTime->setText(RomDataView::tr("Unknown"));
+		// tr: Invalid date/time.
+		lblDateTime->setText(U82Q(C_("RomDataView", "Unknown")));
 		tabs[field->tabIdx].formLayout->addRow(lblDesc, lblDateTime);
 		return;
 	}
@@ -687,23 +698,39 @@ void RomDataViewPrivate::initDateTime(QLabel *lblDesc, const RomFields::Field *f
 	dateTime.setMSecsSinceEpoch(field->data.date_time * 1000);
 
 	QString str;
-	switch (field->desc.flags &
-		(RomFields::RFT_DATETIME_HAS_DATE | RomFields::RFT_DATETIME_HAS_TIME))
-	{
+	switch (field->desc.flags & RomFields::RFT_DATETIME_HAS_DATETIME_NO_YEAR_MASK) {
 		case RomFields::RFT_DATETIME_HAS_DATE:
 			// Date only.
 			str = dateTime.date().toString(Qt::DefaultLocaleShortDate);
 			break;
 
 		case RomFields::RFT_DATETIME_HAS_TIME:
+		case RomFields::RFT_DATETIME_HAS_TIME |
+		     RomFields::RFT_DATETIME_NO_YEAR:
 			// Time only.
 			str = dateTime.time().toString(Qt::DefaultLocaleShortDate);
 			break;
 
 		case RomFields::RFT_DATETIME_HAS_DATE |
-			RomFields::RFT_DATETIME_HAS_TIME:
+		     RomFields::RFT_DATETIME_HAS_TIME:
 			// Date and time.
 			str = dateTime.toString(Qt::DefaultLocaleShortDate);
+			break;
+
+		case RomFields::RFT_DATETIME_HAS_DATE |
+		     RomFields::RFT_DATETIME_NO_YEAR:
+			// Date only. (No year)
+			// TODO: Localize this.
+			str = dateTime.date().toString(QLatin1String("MMM d"));
+			break;
+
+		case RomFields::RFT_DATETIME_HAS_DATE |
+		     RomFields::RFT_DATETIME_HAS_TIME |
+		     RomFields::RFT_DATETIME_NO_YEAR:
+			// Date and time. (No year)
+			// TODO: Localize this.
+			str = dateTime.date().toString(QLatin1String("MMM d")) + QChar(L' ') +
+			      dateTime.time().toString();
 			break;
 
 		default:
@@ -739,14 +766,14 @@ void RomDataViewPrivate::initAgeRatings(QLabel *lblDesc, const RomFields::Field 
 	const RomFields::age_ratings_t *age_ratings = field->data.age_ratings;
 	assert(age_ratings != nullptr);
 	if (!age_ratings) {
-		// No age ratings data.
-		lblAgeRatings->setText(RomDataView::tr("ERROR"));
+		// tr: No age ratings data.
+		lblAgeRatings->setText(U82Q(C_("RomDataView", "ERROR")));
 		tabs[field->tabIdx].formLayout->addRow(lblDesc, lblAgeRatings);
 		return;
 	}
 
 	// Convert the age ratings field to a string.
-	QString str = RP2Q(RomFields::ageRatingsDecode(age_ratings));
+	QString str = U82Q(RomFields::ageRatingsDecode(age_ratings));
 	lblAgeRatings->setText(str);
 	tabs[field->tabIdx].formLayout->addRow(lblDesc, lblAgeRatings);
 }
@@ -804,7 +831,7 @@ void RomDataViewPrivate::initDisplayWidgets(void)
 		ui.tabWidget->show();
 		for (int i = 0; i < fields->tabCount(); i++) {
 			// Create a tab.
-			const rp_char *name = fields->tabName(i);
+			const char *name = fields->tabName(i);
 			if (!name) {
 				// Skip this tab.
 				continue;
@@ -821,7 +848,7 @@ void RomDataViewPrivate::initDisplayWidgets(void)
 			tab.vboxLayout->addLayout(tab.formLayout, 1);
 
 			// Add the tab.
-			ui.tabWidget->addTab(widget, (name ? RP2Q(name) : QString()));
+			ui.tabWidget->addTab(widget, (name ? U82Q(name) : QString()));
 		}
 	} else {
 		// No tabs.
@@ -861,10 +888,11 @@ void RomDataViewPrivate::initDisplayWidgets(void)
 			continue;
 		}
 
-		QLabel *lblDesc = new QLabel(q);
+		// tr: Field description label.
+		string txt = rp_sprintf(C_("RomDataView", "%s:"), field->name.c_str());
+		QLabel *lblDesc = new QLabel(U82Q(txt.c_str()), q);
 		lblDesc->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 		lblDesc->setTextFormat(Qt::PlainText);
-		lblDesc->setText(RomDataView::tr("%1:").arg(RP2Q(field->name)));
 
 		switch (field->type) {
 			case RomFields::RFT_INVALID:
@@ -1101,8 +1129,6 @@ RomData *RomDataView::romData(void) const
  *
  * If a RomData object is already set, it is unref()'d.
  * The new RomData object is ref()'d when set.
- *
- * @return RomData object.
  */
 void RomDataView::setRomData(RomData *romData)
 {

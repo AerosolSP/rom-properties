@@ -1,8 +1,9 @@
 /***************************************************************************
  * ROM Properties Page shell extension. (librpbase)                        *
- * byteswap.h: Byteswapping functions.                                     *
+ * byteswap.c: Byteswapping functions.                                     *
+ * Standard version. (C code only)
  *                                                                         *
- * Copyright (c) 2008-2016 by David Korth                                  *
+ * Copyright (c) 2008-2017 by David Korth                                  *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -24,10 +25,6 @@
 // C includes.
 #include <assert.h>
 
-#ifdef _MSC_VER
-#define inline __inline
-#endif
-
 /**
  * Byteswap two 16-bit WORDs in a 32-bit DWORD.
  * @param dword DWORD containing two 16-bit WORDs.
@@ -42,10 +39,11 @@ static inline uint32_t swap_two_16_in_32(uint32_t dword)
 
 /**
  * 16-bit byteswap function.
+ * Standard version using regular C code.
  * @param ptr Pointer to array to swap. (MUST be 16-bit aligned!)
  * @param n Number of bytes to swap. (Must be divisible by 2; an extra odd byte will be ignored.)
  */
-void __byte_swap_16_array(uint16_t *ptr, unsigned int n)
+void __byte_swap_16_array_c(uint16_t *ptr, unsigned int n)
 {
 	uint32_t *dwptr;
 
@@ -81,10 +79,11 @@ void __byte_swap_16_array(uint16_t *ptr, unsigned int n)
 
 /**
  * 32-bit byteswap function.
+ * Standard version using regular C code.
  * @param ptr Pointer to array to swap. (MUST be 32-bit aligned!)
  * @param n Number of bytes to swap. (Must be divisible by 4; extra bytes will be ignored.)
  */
-void __byte_swap_32_array(uint32_t *ptr, unsigned int n)
+void __byte_swap_32_array_c(uint32_t *ptr, unsigned int n)
 {
 	// Verify the block is 32-bit aligned
 	// and is a multiple of 4 bytes.

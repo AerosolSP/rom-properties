@@ -22,7 +22,7 @@
 #ifndef __ROMPROPERTIES_LIBROMDATA_DISC_NCCHREADER_HPP__
 #define __ROMPROPERTIES_LIBROMDATA_DISC_NCCHREADER_HPP__
 
-#include "../n3ds_structs.h"
+#include "../Handheld/n3ds_structs.h"
 
 // librpbase
 #include "librpbase/disc/IPartition.hpp"
@@ -197,7 +197,7 @@ class NCCHReader : public LibRpBase::IPartition
 		 * Get the content type as a string.
 		 * @return Content type, or nullptr on error.
 		 */
-		const rp_char *contentType(void) const;
+		const char *contentType(void) const;
 
 		/**
 		 * Open a file. (read-only)

@@ -115,7 +115,7 @@
 
 // typeof() for MSVC.
 #ifdef _MSC_VER
-#define typeof(x) decltype(x)
+#define __typeof__(x) decltype(x)
 #endif
 
 /**
@@ -123,12 +123,12 @@
  * @param a	Alignment value.
  * @param x	Byte count to align.
  */
-#define ALIGN(a, x)	(((x)+((a)-1))&~((typeof(x))((a)-1)))
+#define ALIGN(a, x)	(((x)+((a)-1))&~((__typeof__(x))((a)-1)))
 
 /**
  * Alignment assertion macro.
  */
-#define ASSERT_ALIGNMENT(a, ptr)	assert(reinterpret_cast<intptr_t>(ptr) % 16 == 0);
+#define ASSERT_ALIGNMENT(a, ptr)	assert(reinterpret_cast<uintptr_t>(ptr) % 16 == 0);
 
 // C API declaration for MSVC.
 // Required when using stdcall as the default calling convention.

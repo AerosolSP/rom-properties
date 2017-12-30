@@ -22,7 +22,7 @@
 #ifndef __ROMPROPERTIES_LIBROMDATA_DISC_IRESOURCEREADER_HPP__
 #define __ROMPROPERTIES_LIBROMDATA_DISC_IRESOURCEREADER_HPP__
 
-#include "../exe_structs.h"
+#include "../Other/exe_structs.h"
 
 // librpbase
 #include "librpbase/config.librpbase.h"
@@ -64,7 +64,7 @@ class IResourceReader : public LibRpBase::IPartition
 		// StringTable.
 		// - Element 1: Key
 		// - Element 2: Value
-		typedef std::vector<std::pair<LibRpBase::rp_string, LibRpBase::rp_string> > StringTable;
+		typedef std::vector<std::pair<std::string, std::string> > StringTable;
 
 		// StringFileInfo section.
 		// - Key: Langauge ID. (LOWORD = charset, HIWORD = language)

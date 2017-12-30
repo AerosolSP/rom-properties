@@ -1,6 +1,44 @@
 # Changes
 
-## v1.2 - The Dreamcast Release (released 2017/??/??)
+## v1.3 - The Internationalization Release (released 201?/??/??)
+
+* New features:
+  * Most strings are now localizable. The gettext utilities and libintl
+    library are used to provide localization support.
+  * TODO: gettext/libintl is not currently provided for Windows.
+  * TODO: Consider using boost::locale instead of libintl. Has the ability
+    to select a different locale for rom-properties instead of using the
+    system-wide locale, but has a 1 MB runtime library.
+  * All builds now use UTF-8 for text encoding. This increases overhead
+    slightly on Windows due to required UTF-8 to UTF-16 conversion, but it
+    reduces the DLL size. (The Qt build doesn't have much overhead difference,
+    since it has to copy char16_t data into QString before using it anyway.)
+    * The `rp_char` and `rp_string` typedefs are now deprecated. Most uses
+      of these typedefs have been removed.
+  * The 16-bit and 32-bit array byteswapping functions have been optimized
+    using MMX, SSE2, and SSSE3.
+
+* New texture formats:
+  * Khronos KTX textures: https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
+  * Valve VTF textures: https://developer.valvesoftware.com/wiki/Valve_Texture_Format
+  * Valve VTF3 (PS3) textures: Reverse-engineered from Portal for PS3.
+
+* New system features:
+  * Super NES: Satellaview BS-X ROM headers are now decoded properly.
+
+* New compressed texture formats:
+  * Ericsson ETC1 and ETC2
+  * Variations of S3TC compression in different texture formats, including
+    support for both RGTC and LATC in Khronos KTX files.
+  * Support for DXT1 with and without 1-bit alpha. Alpha selection is supported
+    by Khronos KTX and Valve VTF. For other texture file formats, the DXT1_A1
+    algorithm is selected for maximum compatibility.
+
+* Other changes:
+  * libromdata/ has been reorganized to use subdirectories for type of system.
+    This currently includes "Console", "Handheld", "Texture", and "Other".
+
+## v1.2 - The Dreamcast Release (released 2017/11/12)
 
 * New features:
   * rpcli, rp-stub, rp-thumbnailer-dbus: PNG images now have an `sBIT` chunk,
@@ -79,6 +117,7 @@
     * Note that Windows Explorer appears to automatically dereference symlinks
       when using IExtractImage, which is what ends up being used anyway because
       IThumbnailProvider doesn't provide a full path.
+  * rp-config: The key manager can now import keys from Wii U otp.bin files.
 
 ## v1.1 (released 2017/07/04)
 

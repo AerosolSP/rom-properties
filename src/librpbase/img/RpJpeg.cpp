@@ -41,6 +41,11 @@
 #include <memory>
 using std::unique_ptr;
 
+#ifdef _WIN32
+// For OutputDebugStringA().
+#include <windows.h>
+#endif /* _WIN32 */
+
 #ifdef _MSC_VER
 // NOTE: jpegint.h does not have extern "C".
 // We're using it for DELAYLOAD verification.
@@ -490,7 +495,7 @@ rp_image *RpJpeg::loadUnchecked(IRpFile *file)
 		JSAMPARRAY buffer = (*cinfo.mem->alloc_sarray)
 			((j_common_ptr)&cinfo, JPOOL_IMAGE, row_stride + 16, 1);
 		buffer[0] = reinterpret_cast<JSAMPROW>(
-			(ALIGN(16, reinterpret_cast<intptr_t>(buffer[0]))));
+			(ALIGN(16, reinterpret_cast<uintptr_t>(buffer[0]))));
 
 		switch (cinfo.out_color_space) {
 			case JCS_RGB: {
